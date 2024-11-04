@@ -24,26 +24,29 @@ let ground;
 let obstacles;
 let score = 0;
 let scoreText;
+let obstacleTimer = 1500; // Intervallo iniziale per gli ostacoli
 
 function preload() {
-    this.load.image('background', 'assets/background.png'); // Carica il tuo sfondo
-    this.load.image('ground', 'assets/ground.png'); // Carica l'immagine del terreno
-    this.load.image('obstacle', 'assets/obstacle.png'); // Carica l'immagine degli ostacoli
-    this.load.spritesheet('provolone', 'assets/provolone.png', { frameWidth: 32, frameHeight: 32 }); // Carica il provolone
+    this.load.image('background', 'assets/background.png'); // Immagine dello sfondo
+    this.load.image('ground', 'assets/ground.png'); // Immagine del terreno
+    this.load.image('obstacle', 'assets/obstacle.png'); // Immagine degli ostacoli
+    this.load.spritesheet('provolone', 'assets/provolone.png', { frameWidth: 32, frameHeight: 32 }); // Sprite del protagonista
 }
 
 function create() {
+    // Aggiunge lo sfondo e lo fa scorrere
     background = this.add.tileSprite(400, 300, 800, 600, 'background');
 
-    // Crea il terreno più stretto
-    ground = this.physics.add.staticGroup();
-    ground.create(400, 580, 'ground').setScale(1).refreshBody(); // Cambia a setScale(1)
+    // Aggiunge la strada e la fa scorrere
+    ground = this.add.tileSprite(400, 580, 800, 40, 'ground');
+    this.physics.add.existing(ground, true); // Fa in modo che la strada sia statica
 
-    // Crea il personaggio
+    // Crea il personaggio (provolone)
     player = this.physics.add.sprite(100, 450, 'provolone');
     player.setBounce(0.2);
     player.setCollideWorldBounds(true);
 
+    // Animazione del personaggio
     this.anims.create({
         key: 'run',
         frames: this.anims.generateFrameNumbers('provolone', { start: 0, end: 3 }),
@@ -53,36 +56,52 @@ function create() {
 
     player.anims.play('run', true);
 
+    // Aggiunge i controlli
     cursors = this.input.keyboard.createCursorKeys();
 
+    // Crea il gruppo per gli ostacoli
     obstacles = this.physics.add.group();
+
+    // Aggiunge un timer per gli ostacoli
     this.time.addEvent({
-        delay: 1500,
+        delay: obstacleTimer,
         callback: addObstacle,
         callbackScope: this,
         loop: true
     });
 
+    // Collide player con il terreno
     this.physics.add.collider(player, ground);
     this.physics.add.collider(player, obstacles, hitObstacle, null, this);
 
+    // Mostra il punteggio
     scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
 }
 
 function update() {
-    background.tilePositionX += 2; // Scorrimento dello sfondo
+    // Fa scorrere lo sfondo e la strada per simulare il movimento
+    background.tilePositionX += 2;
+    ground.tilePositionX += 4;
 
+    // Gestisce il salto del protagonista
     if (cursors.space.isDown && player.body.touching.down) {
-        player.setVelocityY(-350); // Salto
+        player.setVelocityY(-350);
     }
 
-    score += 0.01; // Incremento del punteggio
+    // Incrementa il punteggio
+    score += 0.01;
     scoreText.setText('Score: ' + Math.floor(score));
+
+    // Aumenta la frequenza degli ostacoli ogni 25 punti
+    if (Math.floor(score) % 25 === 0 && obstacleTimer > 500) {
+        obstacleTimer -= 100; // Riduce il tempo tra un ostacolo e l'altro
+    }
 }
 
 function addObstacle() {
-    const obstacle = obstacles.create(800, Phaser.Math.Between(400, 550), 'obstacle'); // Posizione casuale in alto
-    obstacle.setVelocityX(-200);
+    // Aggiunge un ostacolo alla strada
+    const obstacle = obstacles.create(800, 550, 'obstacle'); // Posiziona gli ostacoli in basso, allineati alla strada
+    obstacle.setVelocityX(-200); // Fa muovere l'ostacolo verso sinistra
     obstacle.setCollideWorldBounds(false);
     obstacle.setImmovable(true);
 }
