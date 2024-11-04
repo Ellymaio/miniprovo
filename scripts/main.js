@@ -26,27 +26,24 @@ let score = 0;
 let scoreText;
 
 function preload() {
-    // Carica le immagini che useremo (le metterai nella cartella "assets")
-    this.load.image('background', 'assets/background.png');
-    this.load.image('ground', 'assets/ground.png');
-    this.load.image('obstacle', 'assets/obstacle.png');
-    this.load.spritesheet('provolone', 'assets/provolone.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.image('background', 'assets/background.png'); // Carica il tuo sfondo
+    this.load.image('ground', 'assets/ground.png'); // Carica l'immagine del terreno
+    this.load.image('obstacle', 'assets/obstacle.png'); // Carica l'immagine degli ostacoli
+    this.load.spritesheet('provolone', 'assets/provolone.png', { frameWidth: 32, frameHeight: 32 }); // Carica il provolone
 }
 
 function create() {
-    // Aggiunge lo sfondo
     background = this.add.tileSprite(400, 300, 800, 600, 'background');
 
-    // Aggiunge il terreno
+    // Crea il terreno più stretto
     ground = this.physics.add.staticGroup();
-    ground.create(400, 580, 'ground').setScale(2).refreshBody();
+    ground.create(400, 580, 'ground').setScale(1).refreshBody(); // Cambia a setScale(1)
 
-    // Aggiunge il personaggio
+    // Crea il personaggio
     player = this.physics.add.sprite(100, 450, 'provolone');
     player.setBounce(0.2);
     player.setCollideWorldBounds(true);
 
-    // Animazione del personaggio
     this.anims.create({
         key: 'run',
         frames: this.anims.generateFrameNumbers('provolone', { start: 0, end: 3 }),
@@ -56,10 +53,8 @@ function create() {
 
     player.anims.play('run', true);
 
-    // Controlli con la tastiera
     cursors = this.input.keyboard.createCursorKeys();
 
-    // Gruppo per gli ostacoli
     obstacles = this.physics.add.group();
     this.time.addEvent({
         delay: 1500,
@@ -68,29 +63,25 @@ function create() {
         loop: true
     });
 
-    // Collisioni
     this.physics.add.collider(player, ground);
     this.physics.add.collider(player, obstacles, hitObstacle, null, this);
 
-    // Mostra il punteggio
     scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
 }
 
 function update() {
-    background.tilePositionX += 2; // Fa scorrere lo sfondo
+    background.tilePositionX += 2; // Scorrimento dello sfondo
 
-    // Salta quando premi la barra spaziatrice
     if (cursors.space.isDown && player.body.touching.down) {
-        player.setVelocityY(-350);
+        player.setVelocityY(-350); // Salto
     }
 
-    // Incrementa il punteggio nel tempo
-    score += 0.01;
+    score += 0.01; // Incremento del punteggio
     scoreText.setText('Score: ' + Math.floor(score));
 }
 
 function addObstacle() {
-    const obstacle = obstacles.create(800, 550, 'obstacle');
+    const obstacle = obstacles.create(800, Phaser.Math.Between(400, 550), 'obstacle'); // Posizione casuale in alto
     obstacle.setVelocityX(-200);
     obstacle.setCollideWorldBounds(false);
     obstacle.setImmovable(true);
